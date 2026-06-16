@@ -2,6 +2,14 @@ using UnityEngine;
 using Unity.Netcode;
 using Unity.Collections;
 
+public enum PlayerRole
+{
+    None = 0,
+    RoleA = 1,
+    RoleB = 2,
+    RoleC = 3
+}
+
 public class Player : NetworkBehaviour
 {
     public NetworkVariable<FixedString32Bytes> PlayerName = new NetworkVariable<FixedString32Bytes>(
@@ -19,7 +27,6 @@ public class Player : NetworkBehaviour
         }
     }
 
-    // Update is called once per frame
     void Update()
     {
         if (!IsOwner) return;
@@ -38,7 +45,6 @@ public class Player : NetworkBehaviour
             PlayerName.Value = NameManager.LocalPlayerName;
         }
 
-        // Notify the lobby UI to refresh when this or any name changes
         PlayerName.OnValueChanged += (oldVal, newVal) => LobbyListUI.Instance?.RefreshList();
         LobbyListUI.Instance?.RefreshList();
     }

@@ -5,6 +5,7 @@ using UnityEngine.InputSystem;
 public class Draggable : NetworkBehaviour
 {
     [SerializeField] private Camera cam;
+    [SerializeField] private PlayerRole requiredRole;
     private NetworkObject selected;
     private Vector3 offset;
 
@@ -34,9 +35,19 @@ public class Draggable : NetworkBehaviour
         Vector2 world = cam.ScreenToWorldPoint(mouse);
         Collider2D hit = Physics2D.OverlapPoint(world);
         if (hit == null) return;
-
+        Debug.Log("Hit");
         var netObj = hit.GetComponentInParent<NetworkObject>();
         if (netObj == null) return;
+
+        var draggable = netObj.GetComponent<Draggable>();
+        if (draggable == null) return;
+
+        if (draggable.requiredRole != PlayerRoleHolder.LocalRole)
+        {
+            Debug.Log("wrong role");
+            Debug.Log(PlayerRoleHolder.LocalRole);
+            return;
+        }
 
         selected = netObj;
         offset = selected.transform.position - (Vector3)world;
@@ -44,14 +55,20 @@ public class Draggable : NetworkBehaviour
 
     Vector3 GetMouseWorld()
     {
+        if (cam == null || !cam.gameObject.activeInHierarchy) cam = Camera.main;
         Vector2 mouse = Mouse.current.position.ReadValue();
         return cam.ScreenToWorldPoint(new Vector3(mouse.x, mouse.y, -cam.transform.position.z));
     }
 
     [Rpc(SendTo.Server)]
-    void DragServerRpc(NetworkObjectReference objRef, Vector3 targetPos)
+    void DragServerRpc(NetworkObjectReference objRef, Vector3 targetPos, RpcParams rpcParams = default)
     {
-        if (objRef.TryGet(out NetworkObject obj))
-            obj.transform.position = targetPos;
+        if (!objRef.TryGet(out NetworkObject obj)) return;
+
+        var draggable = obj.GetComponent<Draggable>(); 
+        ulong senderId = rpcParams.Receive.SenderClientId;
+        if (RoleManager.Instance.GetRole(senderId) != draggable.requiredRole) return;
+
+        obj.transform.position = targetPos;
     }
 }
