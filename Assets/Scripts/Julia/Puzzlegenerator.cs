@@ -33,7 +33,6 @@ public class PuzzleGenerator : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        // Make sure count is even and sum > count
         objectCount = Mathf.Max(2, objectCount % 2 == 0 ? objectCount : objectCount + 1);
         targetSum = Mathf.Max(objectCount + 1, targetSum);
 
@@ -57,9 +56,6 @@ public class PuzzleGenerator : NetworkBehaviour
         scaleManager?.SetPuzzleData(TotalWeight, IsSolvable);
     }
 
-    // -------------------------------------------------------
-    // Core partition algorithm from the design doc
-    // -------------------------------------------------------
     private List<int> GeneratePartition(int sum, int count)
     {
         List<int> partition = new List<int>();
@@ -72,15 +68,10 @@ public class PuzzleGenerator : NetworkBehaviour
             remaining -= rand;
         }
 
-        // Last value absorbs whatever is left
         partition.Add(Mathf.Max(1, remaining));
         return partition;
     }
 
-    // -------------------------------------------------------
-    // Spawn one NetworkObject per weight, assign Draggable.weight
-    // and visual scale, alternating prefab A/B for roles
-    // -------------------------------------------------------
     private void SpawnWeights(List<int> weights, int half)
     {
         for (int i = 0; i < weights.Count; i++)
@@ -109,10 +100,7 @@ public class PuzzleGenerator : NetworkBehaviour
         }
     }
 
-    // -------------------------------------------------------
-    // Clients need weight + scale set too since Draggable
-    // fields aren't NetworkVariables
-    // -------------------------------------------------------
+
     [Rpc(SendTo.NotServer)]
     private void SyncWeightClientRpc(NetworkObjectReference objRef, int weight, float scale)
     {
