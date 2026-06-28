@@ -1,0 +1,101 @@
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.Events;
+
+public class ScaleManager : NetworkBehaviour
+{
+    [Header("References")]
+    [SerializeField] private ScalePlatform leftPan;
+    [SerializeField] private ScalePlatform rightPan;
+
+    [Header("Win Condition")]
+    [SerializeField] private float unsolvableBalanceThreshold = 10f; // diff < this to claim unsolvable
+
+    [Header("Events")]
+    public UnityEvent onPuzzleSolved;
+    public UnityEvent onUnsolvableCorrect;
+    public UnityEvent onUnsolvableWrong;
+
+    private int totalWeight;
+    private bool isSolvable;
+    private bool puzzleOver;
+
+    // Called by PuzzleGenerator after generating
+    public void SetPuzzleData(int total, bool solvable)
+    {
+        totalWeight = total;
+        isSolvable = solvable;
+        puzzleOver = false;
+    }
+
+    void Update()
+    {
+        if (!IsServer || puzzleOver) return;
+        CheckSolvedCondition();
+    }
+
+    private void CheckSolvedCondition()
+    {
+        float left = leftPan.totalWeight;
+        float right = rightPan.totalWeight;
+        float diff = Mathf.Abs(left - right);
+
+        // Win: both sides non-zero, perfectly balanced, all weights placed
+        bool balanced = diff == 0 && left > 0 && right > 0;
+        bool allPlaced = (left + right) >= totalWeight;
+
+        if (balanced && allPlaced && isSolvable)
+        {
+            puzzleOver = true;
+            NotifyResultClientRpc(PuzzleResult.Solved);
+        }
+    }
+
+    // Players call this to claim the puzzle is unsolvable
+    [Rpc(SendTo.Server)]
+    public void ClaimUnsolvableServerRpc()
+    {
+        if (puzzleOver) return;
+
+        float left = leftPan.totalWeight;
+        float right = rightPan.totalWeight;
+        float diff = Mathf.Abs(left - right);
+
+        bool closeEnough = diff < unsolvableBalanceThreshold && left > 0 && right > 0;
+
+        if (!isSolvable && closeEnough)
+        {
+            puzzleOver = true;
+            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect);
+        }
+        else
+        {
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+        }
+    }
+
+    // -------------------------------------------------------
+    // Scoring: percentage of weight correctly balanced
+    // -------------------------------------------------------
+    public float GetPercentageScore()
+    {
+        float left = leftPan.totalWeight;
+        float right = rightPan.totalWeight;
+        float diff = Mathf.Abs(left - right);
+        float weightUnbalanced = totalWeight - (left + right) + diff;
+        return Mathf.Clamp01(1f - (weightUnbalanced / totalWeight)) * 100f;
+    }
+
+    [Rpc(SendTo.Everyone)]
+    private void NotifyResultClientRpc(PuzzleResult result)
+    {
+        switch (result)
+        {
+            case PuzzleResult.Solved:           onPuzzleSolved?.Invoke();        break;
+            case PuzzleResult.UnsolvableCorrect: onUnsolvableCorrect?.Invoke();  break;
+            case PuzzleResult.UnsolvableWrong:  onUnsolvableWrong?.Invoke();     break;
+        }
+    }
+
+    private enum PuzzleResult { Solved, UnsolvableCorrect, UnsolvableWrong }
+}
