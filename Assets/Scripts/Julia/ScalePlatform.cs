@@ -16,7 +16,7 @@ public class ScalePlatform : MonoBehaviour
         if (other.TryGetComponent(out Draggable weight))
         {
             Debug.Log("Adding Weight");
-            totalWeight += weight.weight;
+            totalWeight += weight.weight.Value;
             Debug.Log(totalWeight);
         }
     }
@@ -26,7 +26,7 @@ public class ScalePlatform : MonoBehaviour
         if (other.TryGetComponent(out Draggable weight))
         {
             Debug.Log("Remove weight");
-            totalWeight -= weight.weight;
+            totalWeight -= weight.weight.Value;
             Debug.Log(totalWeight);
         }
     }

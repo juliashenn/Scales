@@ -4,9 +4,12 @@ using UnityEngine.InputSystem;
 
 public class Draggable : NetworkBehaviour
 {
-    public float weight;
+    public NetworkVariable<float> weight = new NetworkVariable<float>(
+    0f,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
     [SerializeField] private bool useXZPlane = true;
-    [SerializeField] private Camera cam;
     [SerializeField] private PlayerRole requiredRole;
     [SerializeField] private float dragThreshold = 0.001f;
     [SerializeField] private LayerMask draggableLayer;
@@ -16,15 +19,12 @@ public class Draggable : NetworkBehaviour
     private Plane dragPlane;
     private Vector3 lastSentPosition;
 
-    public override void OnNetworkSpawn()
-    {
-        if (cam == null)
-            cam = Camera.main;
-    }
+    private Camera Cam => Camera.main; // always fetches the current active main camera
 
     void Update()
     {
         if (!IsClient) return;
+        if (Cam == null) return; // safety check in case camera isn't ready yet
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
             TryPick();
@@ -34,7 +34,6 @@ public class Draggable : NetworkBehaviour
             if (TryGetMouseWorld(out Vector3 worldPoint))
             {
                 Vector3 targetPos = worldPoint + offset;
-
                 if (Vector3.Distance(targetPos, lastSentPosition) > dragThreshold)
                 {
                     DragServerRpc(new NetworkObjectReference(selected), targetPos);
@@ -52,10 +51,7 @@ public class Draggable : NetworkBehaviour
 
     void TryPick()
     {
-        if (cam == null) cam = Camera.main;
-
-        Vector2 mouse = Mouse.current.position.ReadValue();
-        Ray ray = cam.ScreenPointToRay(mouse);
+        Ray ray = Cam.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, draggableLayer)) return;
 
@@ -85,8 +81,7 @@ public class Draggable : NetworkBehaviour
 
     bool TryGetMouseWorld(out Vector3 worldPoint)
     {
-        Vector2 mouse = Mouse.current.position.ReadValue();
-        Ray ray = cam.ScreenPointToRay(mouse);
+        Ray ray = Cam.ScreenPointToRay(Mouse.current.position.ReadValue());
 
         if (dragPlane.Raycast(ray, out float distance))
         {

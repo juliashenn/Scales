@@ -15,8 +15,9 @@ GameObject:
   - component: {fileID: 6835398321974211235}
   - component: {fileID: 1511814695965242309}
   - component: {fileID: 30974251738724270}
+  - component: {fileID: -6380066631614283608}
   m_Layer: 7
-  m_Name: Cube
+  m_Name: WeightA
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -153,8 +154,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Draggable
   ShowTopMostFoldoutHeaderGroup: 1
+  weight: 0
+  useXZPlane: 1
   cam: {fileID: 0}
   requiredRole: 1
+  dragThreshold: 0.001
+  draggableLayer:
+    serializedVersion: 2
+    m_Bits: 128
 --- !u!114 &30974251738724270
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,3 +208,30 @@ MonoBehaviour:
   SwitchTransformSpaceWhenParented: 0
   Interpolate: 1
   SlerpPosition: 0
+--- !u!54 &-6380066631614283608
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2088001640554951857}
+  serializedVersion: 5
+  m_Mass: 1
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
