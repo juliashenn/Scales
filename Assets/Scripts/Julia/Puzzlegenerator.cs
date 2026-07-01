@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -44,9 +45,9 @@ public class PuzzleGenerator : NetworkBehaviour
         List<int> combined = new List<int>(left);
         combined.AddRange(right);
 
-        IsSolvable = Random.value > unsolvableChance;
+        IsSolvable = UnityEngine.Random.value > unsolvableChance;
         if (!IsSolvable)
-            combined[0] += Random.Range(1, 11);
+            combined[0] += UnityEngine.Random.Range(1, 11);
 
         TotalWeight = 0;
         foreach (int w in combined) TotalWeight += w;
@@ -64,7 +65,7 @@ public class PuzzleGenerator : NetworkBehaviour
 
         for (int i = 0; i < count - 1; i++)
         {
-            int rand = Random.Range(1, sum / count + 1);
+            int rand = UnityEngine.Random.Range(1, sum / count + 1);
             partition.Add(rand);
             remaining -= rand;
         }
@@ -77,14 +78,22 @@ public class PuzzleGenerator : NetworkBehaviour
     {
 
         // Randomize the order first
-        weights = weights.OrderBy(x => Random.value).ToList();
+        weights = weights.OrderBy(x => UnityEngine.Random.value).ToList();
 
         float startX = -(weights.Count - 1) * spawnSpacing * 0.5f; // center the row
+
+        List<WeightShape> shapePoolA = Enum.GetValues(typeof(WeightShape)).Cast<WeightShape>().ToList();
+        List<WeightShape> shapePoolB = Enum.GetValues(typeof(WeightShape)).Cast<WeightShape>().ToList();
+
+        // Shuffle both independently
+        shapePoolA = shapePoolA.OrderBy(x => UnityEngine.Random.value).ToList();
+        shapePoolB = shapePoolB.OrderBy(x => UnityEngine.Random.value).ToList();
 
         for (int i = 0; i < weights.Count; i++)
         {
             // First half belongs to RoleA, second half to RoleB
-            NetworkObject prefab = i < half ? weightPrefabA : weightPrefabB;
+            bool isRoleA = i < half;
+            NetworkObject prefab = isRoleA ? weightPrefabA : weightPrefabB;
 
             // Spawn in a horizontal row
             Vector3 spawnPos = spawnArea != null
@@ -96,7 +105,21 @@ public class PuzzleGenerator : NetworkBehaviour
             obj.Spawn();
 
             if (obj.TryGetComponent(out Draggable draggable))
+            {
                 draggable.weight.Value = weights[i];
+                WeightShape chosenShape;
+                if (isRoleA)
+                {
+                    chosenShape = shapePoolA[i];
+                }
+                else
+                {
+                    chosenShape = shapePoolB[i - half];
+                }
+                draggable.SetShape(chosenShape);
+            }
+                
+           
 
             float scale = 0.5f + (weights[i] * 0.1f);
             obj.transform.localScale = Vector3.one * scale;
@@ -107,7 +130,7 @@ public class PuzzleGenerator : NetworkBehaviour
     {
         for (int i = list.Count - 1; i > 0; i--)
         {
-            int j = Random.Range(0, i + 1);
+            int j = UnityEngine.Random.Range(0, i + 1);
             (list[i], list[j]) = (list[j], list[i]);
         }
     }

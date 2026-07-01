@@ -4938,7 +4938,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1663322747
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5017,6 +5017,13 @@ MonoBehaviour:
   draggableLayer:
     serializedVersion: 2
     m_Bits: 0
+  shape: 0
+  square: {fileID: 0}
+  circle: {fileID: 0}
+  triangle: {fileID: 0}
+  star: {fileID: 0}
+  heart: {fileID: 0}
+  pentagon: {fileID: 0}
 --- !u!1 &1764431241
 GameObject:
   m_ObjectHideFlags: 0

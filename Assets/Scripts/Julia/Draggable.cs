@@ -1,6 +1,14 @@
+using System;
+using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.VectorGraphics;
 using UnityEngine;
 using UnityEngine.InputSystem;
+
+public enum WeightShape
+{
+    Square, Circle, Triangle, Star, Heart, Pentagon
+};
 
 public class Draggable : NetworkBehaviour
 {
@@ -14,12 +22,59 @@ public class Draggable : NetworkBehaviour
     [SerializeField] private float dragThreshold = 0.001f;
     [SerializeField] private LayerMask draggableLayer;
 
+    [Header("Shapes")]
+    [SerializeField] private WeightShape shape;
+    [SerializeField] private GameObject square;
+    [SerializeField] private GameObject circle;
+    [SerializeField] private GameObject triangle;
+    [SerializeField] private GameObject star;
+    [SerializeField] private GameObject heart;
+    [SerializeField] private GameObject pentagon;
+    private Dictionary<WeightShape, GameObject> shapePrefabs;
+
     private NetworkObject selected;
     private Vector3 offset;
     private Plane dragPlane;
     private Vector3 lastSentPosition;
 
     private Camera Cam => Camera.main; // always fetches the current active main camera
+
+    private void Awake()
+    {
+        shapePrefabs = new Dictionary<WeightShape, GameObject>
+        {
+            {WeightShape.Square, square },
+            {WeightShape.Circle, circle },
+            {WeightShape.Triangle, triangle },
+            {WeightShape.Star, star },
+            {WeightShape.Heart, heart },
+            {WeightShape.Pentagon, pentagon }
+        };
+
+        // default is square
+        square.SetActive( true );
+        circle.SetActive( false );
+        triangle.SetActive( false );
+        star.SetActive( false );
+        heart.SetActive( false );
+        pentagon.SetActive( false );
+    }
+
+    public void SetShape(WeightShape newShape)
+    {
+        if (!shapePrefabs.ContainsKey(newShape))
+        {
+            Debug.LogError($"Missing prefab for {newShape}");
+            return;
+        }
+
+        if (shapePrefabs.ContainsKey(shape))
+            shapePrefabs[shape].SetActive(false);
+
+        shapePrefabs[newShape].SetActive(true);
+
+        shape = newShape;
+    }
 
     void Update()
     {
