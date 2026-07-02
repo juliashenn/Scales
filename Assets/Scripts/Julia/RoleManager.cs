@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -45,6 +46,23 @@ public class RoleManager : NetworkBehaviour
     void SetRoleClientRpc(int role, RpcParams rpcParams = default)
     {
         PlayerRoleHolder.SetRole((PlayerRole)role);
+    }
+
+    public void CycleRoles()
+    {
+        if (assignedRoles.Count < 3) return;
+
+        var clientIds = assignedRoles.Keys.ToList();
+        var currentRoles = clientIds.ToDictionary(id => id, id => assignedRoles[id]);
+
+        for (int i = 0; i < clientIds.Count; i++)
+        {
+            ulong clientId = clientIds[i];
+            PlayerRole newRole = currentRoles[clientIds[(i + 1) % clientIds.Count]];
+
+            assignedRoles[clientId] = newRole;
+            SetRoleClientRpc((int)newRole, RpcTarget.Single(clientId, RpcTargetUse.Temp));
+        }
     }
 }
 
