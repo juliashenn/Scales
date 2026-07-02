@@ -61,7 +61,7 @@ public class ScaleManager : NetworkBehaviour
         float right = rightPan.totalWeight;
         float diff = Mathf.Abs(left - right);
 
-        bool closeEnough = diff < unsolvableBalanceThreshold && left > 0 && right > 0;
+        bool closeEnough = diff < unsolvableBalanceThreshold && ((left + right) >= totalWeight);
 
         if (!isSolvable && closeEnough)
         {
