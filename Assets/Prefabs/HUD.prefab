@@ -12,6 +12,8 @@ GameObject:
   - component: {fileID: 860859839407518689}
   - component: {fileID: 3491959560142510140}
   - component: {fileID: 1775511802838437277}
+  - component: {fileID: 1785517697380390819}
+  - component: {fileID: 767768313498771837}
   m_Layer: 5
   m_Name: HUD
   m_TagString: Untagged
@@ -103,6 +105,31 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!225 &1785517697380390819
+CanvasGroup:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988983514892005848}
+  m_Enabled: 1
+  m_Alpha: 0
+  m_Interactable: 0
+  m_BlocksRaycasts: 0
+  m_IgnoreParentGroups: 0
+--- !u!114 &767768313498771837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1988983514892005848}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dfdc9f253f3c96540974284598355505, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HUDVisibility
+  hudRoot: {fileID: 1785517697380390819}
 --- !u!1 &3390425209332880325
 GameObject:
   m_ObjectHideFlags: 0

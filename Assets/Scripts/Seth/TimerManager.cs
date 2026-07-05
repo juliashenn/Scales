@@ -17,7 +17,7 @@ public class TimerManager : NetworkBehaviour
 
     private float roleTimer = 0f;
     private readonly NetworkVariable<float> puzzleTimer = new NetworkVariable<float>(0f);
-    private bool sessionActive = false;
+    private readonly NetworkVariable<bool> sessionActive = new NetworkVariable<bool>(false);
 
     private void Awake()
     {
@@ -33,7 +33,7 @@ public class TimerManager : NetworkBehaviour
 
     private void Update()
     {
-        if (!IsServer || !sessionActive) return;
+        if (!IsServer || !sessionActive.Value) return;
 
         // Role switching
         roleTimer += Time.deltaTime;
@@ -54,7 +54,7 @@ public class TimerManager : NetworkBehaviour
 
     private void CheckPlayerCount(ulong clientId)
     {
-        if (sessionActive) return;
+        if (sessionActive.Value) return;
 
         // Start session when we have at least 3 players
         if (NetworkManager.Singleton.ConnectedClients.Count >= 3)
@@ -65,7 +65,7 @@ public class TimerManager : NetworkBehaviour
 
     private void StartSession()
     {
-        sessionActive = true;
+        sessionActive.Value = true;
         roleTimer = 0f;
         puzzleTimer.Value = 0f;
 
@@ -75,7 +75,7 @@ public class TimerManager : NetworkBehaviour
 
     private void EndSessionDueToTime()
     {
-        sessionActive = false;
+        sessionActive.Value = false;
         onTimeExpired?.Invoke();
         Debug.Log("[TimerManager] Puzzle time expired - Game Over");
 
@@ -83,6 +83,8 @@ public class TimerManager : NetworkBehaviour
     }
 
     public float GetTimeLimit() => puzzleTimeLimit;
+
+    public bool IsSessionActive() => sessionActive.Value;
 
     // Optional helper
     public float GetRemainingTime() => Mathf.Max(0, puzzleTimeLimit - puzzleTimer.Value);
