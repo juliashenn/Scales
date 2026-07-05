@@ -82,6 +82,8 @@ public class TimerManager : NetworkBehaviour
         // TODO: End the game properly (idk how that's done)
     }
 
+    public float GetTimeLimit() => puzzleTimeLimit;
+
     // Optional helper
     public float GetRemainingTime() => Mathf.Max(0, puzzleTimeLimit - puzzleTimer);
 }
