@@ -9,6 +9,5 @@ public class TimerBarUI : MonoBehaviour
     {
         if (TimerManager.Instance == null) return; 
         timerFillImage.fillAmount = TimerManager.Instance.GetRemainingTime() / TimerManager.Instance.GetTimeLimit();
-        Debug.Log("Remaining Time = " + TimerManager.Instance.GetRemainingTime() + " / " + TimerManager.Instance.GetTimeLimit());
     }
 }

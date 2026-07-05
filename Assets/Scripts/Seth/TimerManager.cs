@@ -16,7 +16,7 @@ public class TimerManager : NetworkBehaviour
     public UnityEvent onRolesSwapped;
 
     private float roleTimer = 0f;
-    private float puzzleTimer = 0f;
+    private readonly NetworkVariable<float> puzzleTimer = new NetworkVariable<float>(0f);
     private bool sessionActive = false;
 
     private void Awake()
@@ -45,9 +45,8 @@ public class TimerManager : NetworkBehaviour
         }
 
         // Puzzle timer
-        puzzleTimer += Time.deltaTime;
-        Debug.Log("New Timer: " + puzzleTimer);
-        if (puzzleTimer >= puzzleTimeLimit)
+        puzzleTimer.Value += Time.deltaTime;
+        if (puzzleTimer.Value >= puzzleTimeLimit)
         {
             EndSessionDueToTime();
         }
@@ -68,7 +67,7 @@ public class TimerManager : NetworkBehaviour
     {
         sessionActive = true;
         roleTimer = 0f;
-        puzzleTimer = 0f;
+        puzzleTimer.Value = 0f;
 
         onSessionStarted?.Invoke();
         Debug.Log("[TimerManager] Game session started with 3+ players.");
@@ -86,5 +85,5 @@ public class TimerManager : NetworkBehaviour
     public float GetTimeLimit() => puzzleTimeLimit;
 
     // Optional helper
-    public float GetRemainingTime() => Mathf.Max(0, puzzleTimeLimit - puzzleTimer);
+    public float GetRemainingTime() => Mathf.Max(0, puzzleTimeLimit - puzzleTimer.Value);
 }
