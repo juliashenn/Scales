@@ -46,6 +46,7 @@ public class TimerManager : NetworkBehaviour
 
         // Puzzle timer
         puzzleTimer += Time.deltaTime;
+        Debug.Log("New Timer: " + puzzleTimer);
         if (puzzleTimer >= puzzleTimeLimit)
         {
             EndSessionDueToTime();
