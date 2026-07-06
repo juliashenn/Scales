@@ -88,7 +88,7 @@ public class ScaleManager : NetworkBehaviour
     {
         float left = leftPan.totalWeight;
         float right = rightPan.totalWeight;
-        float diff = Mathf.Abs(left - right);
+        float diff = Mathf.Abs(left - right) * 2; // Penalize difference more heavily
         float score = left + right - diff;
         return score * scoreMultiplier;
     }
