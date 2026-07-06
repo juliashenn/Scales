@@ -4,12 +4,17 @@ using UnityEngine.Events;
 
 public class ScaleManager : NetworkBehaviour
 {
+    public static ScaleManager Instance;
+
     [Header("References")]
     [SerializeField] private ScalePlatform leftPan;
     [SerializeField] private ScalePlatform rightPan;
 
     [Header("Win Condition")]
     [SerializeField] private float unsolvableBalanceThreshold = 10f; // diff < this to claim unsolvable
+
+    [Header("Score Multiplier")]
+    [SerializeField] private float scoreMultiplier = 10f;
 
     [Header("Events")]
     public UnityEvent onPuzzleSolved;
@@ -19,6 +24,8 @@ public class ScaleManager : NetworkBehaviour
     private int totalWeight;
     private bool isSolvable;
     private bool puzzleOver;
+
+    private void Awake() => Instance = this;
 
     // Called by PuzzleGenerator after generating
     public void SetPuzzleData(int total, bool solvable)
@@ -75,15 +82,25 @@ public class ScaleManager : NetworkBehaviour
     }
 
     // -------------------------------------------------------
-    // Scoring: percentage of weight correctly balanced
+    // Scoring: Total weight minus difference, with remaining time as bonus
     // -------------------------------------------------------
-    public float GetPercentageScore()
+    public float GetScore()
     {
         float left = leftPan.totalWeight;
         float right = rightPan.totalWeight;
         float diff = Mathf.Abs(left - right);
-        float weightUnbalanced = totalWeight - (left + right) + diff;
-        return Mathf.Clamp01(1f - (weightUnbalanced / totalWeight)) * 100f;
+        float score = left + right - diff;
+        return score * scoreMultiplier;
+    }
+
+    public float GetBonusScore()
+    {
+        return TimerManager.Instance.GetRemainingTime(); // Remaining time as bonus
+    }
+
+    public float GetTotalScore()
+    {
+        return GetScore() + GetBonusScore();
     }
 
     [Rpc(SendTo.Everyone)]
