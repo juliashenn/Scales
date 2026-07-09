@@ -7,7 +7,7 @@ public class TimerCounterUI : MonoBehaviour
 
     void Update()
     {
-        if (TimerManager.Instance == null) return;
+        if (TimerManager.Instance == null || !TimerManager.Instance.IsSessionActive()) return;
 
         float remaining = TimerManager.Instance.GetRemainingTime();
         int minutes = Mathf.FloorToInt(remaining / 60f);

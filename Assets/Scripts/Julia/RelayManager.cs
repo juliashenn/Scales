@@ -13,6 +13,8 @@ using Mono.Cecil.Cil;
 
 public class RelayManager : MonoBehaviour
 {
+
+    public static RelayManager Instance;
     [SerializeField] Button hostButton;
     [SerializeField] Button joinButton;
     [SerializeField] TMP_InputField joinInput;
@@ -20,11 +22,14 @@ public class RelayManager : MonoBehaviour
     [SerializeField] TextMeshProUGUI codeText;
     [SerializeField] GameObject HostJoinCanvas;
 
+    private void Awake() => Instance = this;
     async void Start()
     {
+        PlayerRoleHolder.ResetRole();
         await UnityServices.InitializeAsync();
 
-        await AuthenticationService.Instance.SignInAnonymouslyAsync();
+        if (!AuthenticationService.Instance.IsSignedIn)
+            await AuthenticationService.Instance.SignInAnonymouslyAsync();
 
         hostButton.onClick.AddListener(CreateRelay);
         joinButton.onClick.AddListener(() => JoinRelay(joinInput.text));
@@ -43,6 +48,7 @@ public class RelayManager : MonoBehaviour
         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
         RegisterLobbyCallbacks();
         NetworkManager.Singleton.StartHost();
+        LobbyListUI.Instance?.ShowLobby();
     }
 
     async void JoinRelay(string joinCode)
@@ -56,16 +62,39 @@ public class RelayManager : MonoBehaviour
         NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
         RegisterLobbyCallbacks();
         NetworkManager.Singleton.StartClient();
+        LobbyListUI.Instance?.ShowLobby();
     }
 
     void RegisterLobbyCallbacks()
     {
+        NetworkManager.Singleton.OnClientConnectedCallback -= OnClientChanged;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnClientChanged;
+        NetworkManager.Singleton.OnClientDisconnectCallback -= OnDisconnected;
+
         NetworkManager.Singleton.OnClientConnectedCallback += OnClientChanged;
         NetworkManager.Singleton.OnClientDisconnectCallback += OnClientChanged;
+        NetworkManager.Singleton.OnClientDisconnectCallback += OnDisconnected;
     }
 
     void OnClientChanged(ulong clientId)
     {
         LobbyListUI.Instance?.RefreshList();
+    }
+
+    public void ShowHostJoinScreen()
+    {
+        HostJoinCanvas?.SetActive(true);
+        LobbyCanvas?.SetActive(false);
+        LobbyListUI.Instance?.ResetState();
+    }
+
+    void OnDisconnected(ulong clientId)
+    {
+        // If we're a client and we get disconnected (not by our own choice), go back to menu
+        if (NetworkManager.Singleton.IsHost) return;
+        if (clientId != NetworkManager.Singleton.LocalClientId) return;
+
+        PlayerRoleHolder.SetRole(PlayerRole.None);
+        ShowHostJoinScreen();
     }
 }

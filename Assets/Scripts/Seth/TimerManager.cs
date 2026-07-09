@@ -28,7 +28,7 @@ public class TimerManager : NetworkBehaviour
     {
         if (!IsServer) return;
 
-        NetworkManager.Singleton.OnClientConnectedCallback += CheckPlayerCount;
+        //NetworkManager.Singleton.OnClientConnectedCallback += CheckPlayerCount;
     }
 
     private void Update()
@@ -63,8 +63,9 @@ public class TimerManager : NetworkBehaviour
         }
     }
 
-    private void StartSession()
+    public void StartSession()
     {
+        if (!IsServer) return;
         sessionActive.Value = true;
         roleTimer = 0f;
         puzzleTimer.Value = 0f;
@@ -75,11 +76,19 @@ public class TimerManager : NetworkBehaviour
 
     private void EndSessionDueToTime()
     {
+        if (!IsServer) return;
         sessionActive.Value = false;
         onTimeExpired?.Invoke();
         Debug.Log("[TimerManager] Puzzle time expired - Game Over");
 
         // TODO: End the game properly (idk how that's done)
+        ScaleManager.Instance?.TimeExpiredServerRpc();
+    }
+
+    public void EndSession()
+    {
+        if (!IsServer) return;
+        sessionActive.Value = false;
     }
 
     public float GetTimeLimit() => puzzleTimeLimit;

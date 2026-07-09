@@ -7,7 +7,7 @@ public class ScoreText : MonoBehaviour
 
     void Update()
     {
-        if (ScaleManager.Instance == null) return;
+        if (ScaleManager.Instance == null || !TimerManager.Instance.IsSessionActive()) return;
 
         int score = Mathf.RoundToInt(ScaleManager.Instance.GetScore());
         int bonusScore = Mathf.RoundToInt(ScaleManager.Instance.GetBonusScore());

@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 3861536161
+  GlobalObjectIdHash: 310732871
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -111,7 +111,11 @@ MonoBehaviour:
   draggableLayer:
     serializedVersion: 2
     m_Bits: 128
-  shape: 0
+  shape:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   square: {fileID: 5844086409464564298}
   circle: {fileID: 4321274595661430546}
   triangle: {fileID: 6539130127657049894}
@@ -286,7 +290,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -3676728085192693422, guid: 67c1606674b90b147b41dfc024d31b12, type: 3}
+  m_Mesh: {fileID: -3676728085192693422, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
 --- !u!54 &288426507655681373
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -431,7 +435,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -239852745152508863, guid: 67c1606674b90b147b41dfc024d31b12, type: 3}
+  m_Mesh: {fileID: -239852745152508863, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
 --- !u!54 &8229455110905940162
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -581,7 +585,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -5801228030656462994, guid: 67c1606674b90b147b41dfc024d31b12, type: 3}
+  m_Mesh: {fileID: -5801228030656462994, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
 --- !u!54 &5113866461699201676
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -731,7 +735,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 3923001220205022435, guid: 67c1606674b90b147b41dfc024d31b12, type: 3}
+  m_Mesh: {fileID: 3923001220205022435, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
 --- !u!54 &8127450302856706885
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -784,6 +788,10 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1206594037484885322, guid: c422b7598aa32984b9dab70b13fca4fb, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: -5495902117074765545, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
     - target: {fileID: 3225943751106672004, guid: c422b7598aa32984b9dab70b13fca4fb, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -886,7 +894,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -5495902117074765545, guid: 67c1606674b90b147b41dfc024d31b12, type: 3}
+  m_Mesh: {fileID: -5495902117074765545, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
 --- !u!54 &6875506787596152940
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -922,6 +930,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 7806242178064378934}
     m_Modifications:
+    - target: {fileID: 883469443875313886, guid: 1dded2d494011924d98631d78d383701, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 2534964839176971238, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
     - target: {fileID: 3739293361982820299, guid: 1dded2d494011924d98631d78d383701, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
       value: 
@@ -936,7 +948,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6423096897857541293, guid: 1dded2d494011924d98631d78d383701, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 6900950474527556651, guid: 1dded2d494011924d98631d78d383701, type: 3}
       propertyPath: m_LocalScale.x
@@ -1031,7 +1043,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 2534964839176971238, guid: 67c1606674b90b147b41dfc024d31b12, type: 3}
+  m_Mesh: {fileID: 2534964839176971238, guid: 3d6283ac93305a7468aa9dbe4dff24da, type: 3}
 --- !u!54 &3082364173775481363
 Rigidbody:
   m_ObjectHideFlags: 0

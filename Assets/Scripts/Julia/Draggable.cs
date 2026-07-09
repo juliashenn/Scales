@@ -23,7 +23,11 @@ public class Draggable : NetworkBehaviour
     [SerializeField] private LayerMask draggableLayer;
 
     [Header("Shapes")]
-    [SerializeField] private WeightShape shape;
+    public NetworkVariable<WeightShape> shape = new NetworkVariable<WeightShape>(
+    WeightShape.Square,
+    NetworkVariableReadPermission.Everyone,
+    NetworkVariableWritePermission.Server
+    );
     [SerializeField] private GameObject square;
     [SerializeField] private GameObject circle;
     [SerializeField] private GameObject triangle;
@@ -51,15 +55,39 @@ public class Draggable : NetworkBehaviour
             {WeightShape.Pentagon, pentagon }
         };
 
-        // default is square
-        square.SetActive( true );
-        circle.SetActive( false );
-        triangle.SetActive( false );
-        star.SetActive( false );
-        heart.SetActive( false );
-        pentagon.SetActive( false );
+        foreach (var kvp in shapePrefabs)
+            kvp.Value.SetActive(false);
     }
 
+    public override void OnNetworkSpawn()
+    {
+        // Subscribe to changes — fires on every client whenever the server updates the value
+        weight.OnValueChanged += (oldVal, newVal) => ApplyScale(newVal);
+        shape.OnValueChanged += (oldVal, newVal) => ApplyShape(newVal);
+
+        // Apply current values immediately in case they were already set before this client spawned
+        ApplyScale(weight.Value);
+        ApplyShape(shape.Value);
+    }
+
+    public void ServerSetup(float newWeight, WeightShape newShape)
+    {
+        if (!IsServer) return;
+        weight.Value = newWeight;
+        shape.Value = newShape;
+    }
+
+    void ApplyScale(float w)
+    {
+        float scale = 0.5f + (w * 0.1f);
+        transform.localScale = Vector3.one * scale;
+    }
+
+    void ApplyShape(WeightShape newShape)
+    {
+        foreach (var kvp in shapePrefabs)
+            kvp.Value.SetActive(kvp.Key == newShape);
+    }
     public void SetShape(WeightShape newShape)
     {
         if (!shapePrefabs.ContainsKey(newShape))
@@ -68,12 +96,12 @@ public class Draggable : NetworkBehaviour
             return;
         }
 
-        if (shapePrefabs.ContainsKey(shape))
-            shapePrefabs[shape].SetActive(false);
+        if (shapePrefabs.ContainsKey(shape.Value))
+            shapePrefabs[shape.Value].SetActive(false);
 
         shapePrefabs[newShape].SetActive(true);
 
-        shape = newShape;
+        shape.Value = newShape;
     }
 
     void Update()
@@ -115,6 +143,8 @@ public class Draggable : NetworkBehaviour
 
         var draggable = netObj.GetComponent<Draggable>();
         if (draggable == null) return;
+
+        Debug.Log("picking...");
 
         if (draggable.requiredRole != PlayerRoleHolder.LocalRole)
         {

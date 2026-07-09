@@ -76,4 +76,10 @@ public static class PlayerRoleHolder
         LocalRole = role;
         OnRoleAssigned?.Invoke(role);
     }
+
+    // Clears role without notifying subscribers
+    public static void ResetRole()
+    {
+        LocalRole = PlayerRole.None;
+    }
 }

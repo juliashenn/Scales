@@ -17,6 +17,11 @@ public class Player : NetworkBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Owner
     );
+    public NetworkVariable<bool> IsReady = new NetworkVariable<bool>(
+        false,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner
+    ); 
     public float speed = 5f;
 
     void Start()
@@ -46,6 +51,8 @@ public class Player : NetworkBehaviour
         }
 
         PlayerName.OnValueChanged += (oldVal, newVal) => LobbyListUI.Instance?.RefreshList();
+        IsReady.OnValueChanged += (oldVal, newVal) => LobbyListUI.Instance?.RefreshList();
+
         LobbyListUI.Instance?.RefreshList();
     }
 

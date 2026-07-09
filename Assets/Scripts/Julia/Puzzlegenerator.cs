@@ -6,9 +6,10 @@ using UnityEngine;
 
 public class PuzzleGenerator : NetworkBehaviour
 {
+    public static PuzzleGenerator Instance;
     [Header("Puzzle Settings")]
     [SerializeField] private int objectCount = 6;       // must be even
-    [SerializeField] private int targetSum = 20;
+    public int targetSum = 20;
     [SerializeField] private float unsolvableChance = 0.3f;
 
     [Header("Spawn Settings")]
@@ -24,16 +25,29 @@ public class PuzzleGenerator : NetworkBehaviour
     public int TotalWeight { get; private set; }
     public bool IsSolvable { get; private set; }
 
+    private bool spawned = false;
+
+    private void Awake()
+    {
+        Instance = this;
+    }
+
+    public bool hasPuzzle()
+    {
+        return spawned;
+    }
+
     public override void OnNetworkSpawn()
     {
-        if (IsServer)
-            GeneratePuzzle();
+        //if (IsServer)
+        //    GeneratePuzzle();
     }
 
     [ContextMenu("Generate Puzzle (Server Only)")]
     public void GeneratePuzzle()
     {
         if (!IsServer) return;
+        spawned = true;
 
         objectCount = Mathf.Max(2, objectCount % 2 == 0 ? objectCount : objectCount + 1);
         targetSum = Mathf.Max(objectCount + 1, targetSum);
@@ -106,7 +120,7 @@ public class PuzzleGenerator : NetworkBehaviour
 
             if (obj.TryGetComponent(out Draggable draggable))
             {
-                draggable.weight.Value = weights[i];
+                //draggable.weight.Value = weights[i];
                 WeightShape chosenShape;
                 if (isRoleA)
                 {
@@ -116,7 +130,7 @@ public class PuzzleGenerator : NetworkBehaviour
                 {
                     chosenShape = shapePoolB[i - half];
                 }
-                draggable.SetShape(chosenShape);
+                draggable.ServerSetup(weights[i], chosenShape);
             }
                 
            
