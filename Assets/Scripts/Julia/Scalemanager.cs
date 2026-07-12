@@ -119,6 +119,7 @@ public class ScaleManager : NetworkBehaviour
         float right = rightPan.totalWeight;
         float diff = Mathf.Abs(left - right) * 2; // Penalize difference more heavily
         float score = left + right - diff;
+        score = Mathf.Clamp(score, 0, totalWeight * 2); // Ensure score is non-negative and does not exceed max possible
         return score * scoreMultiplier;
     }
 
