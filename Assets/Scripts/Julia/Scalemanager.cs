@@ -51,7 +51,7 @@ public class ScaleManager : NetworkBehaviour
         if (PuzzleGenerator.Instance.hasPuzzle() && !TimerManager.Instance.IsSessionActive())
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, GetScore(), GetBonusScore());
             return;
         }
 
@@ -69,7 +69,8 @@ public class ScaleManager : NetworkBehaviour
             if (PuzzleGenerator.Instance.IsFinalStage)
             {
                 puzzleOver = true;
-                NotifyResultClientRpc(PuzzleResult.Solved);
+                float solvedScore = PuzzleGenerator.Instance.CurrentTargetSum * 2f * scoreMultiplier;
+                NotifyResultClientRpc(PuzzleResult.Solved, solvedScore, GetBonusScore());
             }
             else
             {
@@ -101,12 +102,12 @@ public class ScaleManager : NetworkBehaviour
         if (!isSolvable && closeEnough)
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect);
+            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect, GetScore(), GetBonusScore());
         }
         else
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, GetScore(), GetBonusScore());
         }
     }
 
@@ -134,7 +135,7 @@ public class ScaleManager : NetworkBehaviour
     }
 
     [Rpc(SendTo.Everyone)]
-    private void NotifyResultClientRpc(PuzzleResult result)
+    private void NotifyResultClientRpc(PuzzleResult result, float score, float bonusScore)
     {
         TimerManager.Instance?.EndSession();
         print("notifying");
@@ -143,16 +144,16 @@ public class ScaleManager : NetworkBehaviour
             case PuzzleResult.Solved:
                 print("solved");
                 onPuzzleSolved?.Invoke();
-                EndScreen.Instance?.Won((float)(PuzzleGenerator.Instance.CurrentTargetSum*2.00*scoreMultiplier), GetBonusScore());
+                EndScreen.Instance?.Won(score, bonusScore);
                 break;
             case PuzzleResult.UnsolvableCorrect:
                 onUnsolvableCorrect?.Invoke();
-                EndScreen.Instance?.Won(GetScore(), GetBonusScore());
+                EndScreen.Instance?.Won(score, bonusScore);
                 break;
             case PuzzleResult.UnsolvableWrong:
                 print("unsolvable wrong = lost");
                 onUnsolvableWrong?.Invoke();
-                EndScreen.Instance?.Lost(GetScore(), GetBonusScore());
+                EndScreen.Instance?.Lost(score, bonusScore);
                 break;
         }
     }
@@ -170,7 +171,7 @@ public class ScaleManager : NetworkBehaviour
     {
         if (puzzleOver) return;
         puzzleOver = true;
-        NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+        NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, GetScore(), GetBonusScore());
     }
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
@@ -202,7 +203,7 @@ public class ScaleManager : NetworkBehaviour
     {
         if (!IsServer) return;
         TimerManager.Instance?.StartSession();
-        PuzzleGenerator generator = FindFirstObjectByType<PuzzleGenerator>();
+        PuzzleGenerator generator = PuzzleGenerator.Instance;
         generator?.ResetStages();
         generator?.GeneratePuzzle();
     }
