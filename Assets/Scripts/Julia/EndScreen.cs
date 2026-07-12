@@ -21,8 +21,8 @@ public class EndScreen : MonoBehaviour
     {
         if (ScaleManager.Instance == null) return;
 
-        int score = Mathf.RoundToInt(ScaleManager.Instance.GetScore());
-        int bonusScore = Mathf.RoundToInt(ScaleManager.Instance.GetBonusScore());
+        int score = Mathf.RoundToInt(ScaleManager.Instance.LiveScore);
+        int bonusScore = Mathf.RoundToInt(ScaleManager.Instance.LiveBonusScore);
         scoreText.text = $"Score: {score}\nBonus Score: {bonusScore}";
     }
 

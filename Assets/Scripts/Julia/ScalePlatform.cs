@@ -8,6 +8,11 @@ public class ScalePlatform : MonoBehaviour
     public float totalWeight = 0;
     void Start()
     {
+        ResetWeight();
+    }
+
+    public void ResetWeight()
+    {
         totalWeight = 0;
     }
 

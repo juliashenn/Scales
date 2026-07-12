@@ -21,11 +21,28 @@ public class ScaleManager : NetworkBehaviour
 
     [Header("Events")]
     public UnityEvent onPuzzleSolved;
+    public UnityEvent onStageCompleted;
     public UnityEvent onUnsolvableCorrect;
     public UnityEvent onUnsolvableWrong;
 
-    private int totalWeight;
-    private bool isSolvable;
+    private readonly NetworkVariable<int> totalWeight = new(
+        0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<bool> isSolvable = new(
+        false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    // Server-computed score mirrored to clients, since GetScore() relies on
+    // ScalePlatform.totalWeight, which is only tracked accurately via the server's own physics.
+    private readonly NetworkVariable<float> liveScore = new(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    private readonly NetworkVariable<float> liveBonusScore = new(
+        0f, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+
+    public float LiveScore => liveScore.Value;
+    public float LiveBonusScore => liveBonusScore.Value;
+
+    // Sum of GetScore() from every stage completed so far this session, for the end screen's total.
+    private float cumulativeStageScore;
+
     private bool puzzleOver;
 
     private void Awake() => Instance = this;
@@ -33,14 +50,22 @@ public class ScaleManager : NetworkBehaviour
     // Called by PuzzleGenerator after generating
     public void SetPuzzleData(int total, bool solvable)
     {
-        totalWeight = total;
-        isSolvable = solvable;
+        totalWeight.Value = total;
+        isSolvable.Value = solvable;
         puzzleOver = false;
     }
 
     void Update()
     {
-        if (!IsServer || puzzleOver || !PuzzleGenerator.Instance.hasPuzzle()) return;
+        if (!IsServer) return;
+
+        if (PuzzleGenerator.Instance.hasPuzzle() && TimerManager.Instance != null && TimerManager.Instance.IsSessionActive())
+        {
+            liveScore.Value = GetScore();
+            liveBonusScore.Value = GetBonusScore();
+        }
+
+        if (puzzleOver || !PuzzleGenerator.Instance.hasPuzzle()) return;
         CheckSolvedCondition();
     }
 
@@ -50,7 +75,7 @@ public class ScaleManager : NetworkBehaviour
         if (PuzzleGenerator.Instance.hasPuzzle() && !TimerManager.Instance.IsSessionActive())
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, cumulativeStageScore + GetScore(), GetBonusScore());
             return;
         }
 
@@ -63,11 +88,27 @@ public class ScaleManager : NetworkBehaviour
         //bool allPlaced = (left + right) >= totalWeight;
 
         //if (balanced && allPlaced && isSolvable)
-        if (leftPan.totalWeight == PuzzleGenerator.Instance?.targetSum && leftPan.totalWeight == rightPan.totalWeight)
+        if (leftPan.totalWeight == PuzzleGenerator.Instance?.CurrentTargetSum && leftPan.totalWeight == rightPan.totalWeight)
         {
-            puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.Solved);
+            if (PuzzleGenerator.Instance.IsFinalStage)
+            {
+                puzzleOver = true;
+                NotifyResultClientRpc(PuzzleResult.Solved, cumulativeStageScore + GetScore(), GetBonusScore());
+            }
+            else
+            {
+                cumulativeStageScore += GetScore();
+                ResetPans();
+                PuzzleGenerator.Instance.AdvanceStage();
+                NotifyStageCompleteClientRpc();
+            }
         }
+    }
+
+    private void ResetPans()
+    {
+        leftPan.ResetWeight();
+        rightPan.ResetWeight();
     }
 
     // Players call this to claim the puzzle is unsolvable
@@ -80,17 +121,17 @@ public class ScaleManager : NetworkBehaviour
         float right = rightPan.totalWeight;
         float diff = Mathf.Abs(left - right);
 
-        bool closeEnough = diff < unsolvableBalanceThreshold && ((left + right) >= totalWeight);
+        bool closeEnough = diff < unsolvableBalanceThreshold && ((left + right) >= totalWeight.Value);
 
-        if (!isSolvable && closeEnough)
+        if (!isSolvable.Value && closeEnough)
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect);
+            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect, cumulativeStageScore + GetScore(), GetBonusScore());
         }
         else
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, cumulativeStageScore + GetScore(), GetBonusScore());
         }
     }
 
@@ -103,6 +144,7 @@ public class ScaleManager : NetworkBehaviour
         float right = rightPan.totalWeight;
         float diff = Mathf.Abs(left - right) * 2; // Penalize difference more heavily
         float score = left + right - diff;
+        score = Mathf.Clamp(score, 0, totalWeight.Value * 2); // Ensure score is non-negative and does not exceed max possible
         return score * scoreMultiplier;
     }
 
@@ -117,7 +159,7 @@ public class ScaleManager : NetworkBehaviour
     }
 
     [Rpc(SendTo.Everyone)]
-    private void NotifyResultClientRpc(PuzzleResult result)
+    private void NotifyResultClientRpc(PuzzleResult result, float score, float bonusScore)
     {
         TimerManager.Instance?.EndSession();
         print("notifying");
@@ -126,18 +168,24 @@ public class ScaleManager : NetworkBehaviour
             case PuzzleResult.Solved:
                 print("solved");
                 onPuzzleSolved?.Invoke();
-                EndScreen.Instance?.Won((float)(PuzzleGenerator.Instance.targetSum*2.00*scoreMultiplier), GetBonusScore());
+                EndScreen.Instance?.Won(score, bonusScore);
                 break;
             case PuzzleResult.UnsolvableCorrect:
                 onUnsolvableCorrect?.Invoke();
-                EndScreen.Instance?.Won(GetScore(), GetBonusScore());
+                EndScreen.Instance?.Won(score, bonusScore);
                 break;
             case PuzzleResult.UnsolvableWrong:
                 print("unsolvable wrong = lost");
                 onUnsolvableWrong?.Invoke();
-                EndScreen.Instance?.Lost(GetScore(), GetBonusScore());
+                EndScreen.Instance?.Lost(score, bonusScore);
                 break;
         }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    private void NotifyStageCompleteClientRpc()
+    {
+        onStageCompleted?.Invoke();
     }
 
     private enum PuzzleResult { Solved, UnsolvableCorrect, UnsolvableWrong }
@@ -147,7 +195,7 @@ public class ScaleManager : NetworkBehaviour
     {
         if (puzzleOver) return;
         puzzleOver = true;
-        NotifyResultClientRpc(PuzzleResult.UnsolvableWrong);
+        NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, cumulativeStageScore + GetScore(), GetBonusScore());
     }
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
@@ -178,7 +226,10 @@ public class ScaleManager : NetworkBehaviour
     public void ServerStartSession()
     {
         if (!IsServer) return;
+        cumulativeStageScore = 0f;
         TimerManager.Instance?.StartSession();
-        FindFirstObjectByType<PuzzleGenerator>()?.GeneratePuzzle();
+        PuzzleGenerator generator = PuzzleGenerator.Instance;
+        generator?.ResetStages();
+        generator?.GeneratePuzzle();
     }
 }
