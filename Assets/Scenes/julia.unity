@@ -2901,6 +2901,9 @@ MonoBehaviour:
   onPuzzleSolved:
     m_PersistentCalls:
       m_Calls: []
+  onStageCompleted:
+    m_PersistentCalls:
+      m_Calls: []
   onUnsolvableCorrect:
     m_PersistentCalls:
       m_Calls: []
@@ -3113,7 +3116,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: -0.0025024414, y: -0.0005187988}
+  m_AnchoredPosition: {x: -0.0024414062, y: -0.00048828125}
   m_SizeDelta: {x: -0.005, y: 0.00097656}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &881101129
@@ -4108,8 +4111,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SessionManager
   ShowTopMostFoldoutHeaderGroup: 1
-  roleSwitchInterval: 30
-  puzzleTimeLimit: 20
+  roleSwitchInterval: 300
+  puzzleTimeLimit: 300
   onSessionStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -6345,9 +6348,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PuzzleGenerator
   ShowTopMostFoldoutHeaderGroup: 1
-  objectCount: 6
-  targetSum: 20
-  unsolvableChance: 0.3
+  stages:
+  - objectCount: 2
+    targetSum: 10
+    unsolvableChance: 0
+  - objectCount: 4
+    targetSum: 20
+    unsolvableChance: 0
+  - objectCount: 6
+    targetSum: 30
+    unsolvableChance: 0
   weightPrefabA: {fileID: 6835398321974211235, guid: 082831268ecb2c94fa8f21ecac728250, type: 3}
   weightPrefabB: {fileID: 6835398321974211235, guid: 9f0b6cd5a7a18d74193a05e62b6909fe, type: 3}
   spawnArea: {fileID: 1297191306}

@@ -21,6 +21,7 @@ public class ScaleManager : NetworkBehaviour
 
     [Header("Events")]
     public UnityEvent onPuzzleSolved;
+    public UnityEvent onStageCompleted;
     public UnityEvent onUnsolvableCorrect;
     public UnityEvent onUnsolvableWrong;
 
@@ -63,11 +64,26 @@ public class ScaleManager : NetworkBehaviour
         //bool allPlaced = (left + right) >= totalWeight;
 
         //if (balanced && allPlaced && isSolvable)
-        if (leftPan.totalWeight == PuzzleGenerator.Instance?.targetSum && leftPan.totalWeight == rightPan.totalWeight)
+        if (leftPan.totalWeight == PuzzleGenerator.Instance?.CurrentTargetSum && leftPan.totalWeight == rightPan.totalWeight)
         {
-            puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.Solved);
+            if (PuzzleGenerator.Instance.IsFinalStage)
+            {
+                puzzleOver = true;
+                NotifyResultClientRpc(PuzzleResult.Solved);
+            }
+            else
+            {
+                ResetPans();
+                PuzzleGenerator.Instance.AdvanceStage();
+                NotifyStageCompleteClientRpc();
+            }
         }
+    }
+
+    private void ResetPans()
+    {
+        leftPan.ResetWeight();
+        rightPan.ResetWeight();
     }
 
     // Players call this to claim the puzzle is unsolvable
@@ -126,7 +142,7 @@ public class ScaleManager : NetworkBehaviour
             case PuzzleResult.Solved:
                 print("solved");
                 onPuzzleSolved?.Invoke();
-                EndScreen.Instance?.Won((float)(PuzzleGenerator.Instance.targetSum*2.00*scoreMultiplier), GetBonusScore());
+                EndScreen.Instance?.Won((float)(PuzzleGenerator.Instance.CurrentTargetSum*2.00*scoreMultiplier), GetBonusScore());
                 break;
             case PuzzleResult.UnsolvableCorrect:
                 onUnsolvableCorrect?.Invoke();
@@ -138,6 +154,12 @@ public class ScaleManager : NetworkBehaviour
                 EndScreen.Instance?.Lost(GetScore(), GetBonusScore());
                 break;
         }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    private void NotifyStageCompleteClientRpc()
+    {
+        onStageCompleted?.Invoke();
     }
 
     private enum PuzzleResult { Solved, UnsolvableCorrect, UnsolvableWrong }
@@ -179,6 +201,8 @@ public class ScaleManager : NetworkBehaviour
     {
         if (!IsServer) return;
         TimerManager.Instance?.StartSession();
-        FindFirstObjectByType<PuzzleGenerator>()?.GeneratePuzzle();
+        PuzzleGenerator generator = FindFirstObjectByType<PuzzleGenerator>();
+        generator?.ResetStages();
+        generator?.GeneratePuzzle();
     }
 }

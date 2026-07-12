@@ -7,10 +7,13 @@ using UnityEngine;
 public class PuzzleGenerator : NetworkBehaviour
 {
     public static PuzzleGenerator Instance;
+
     [Header("Puzzle Settings")]
-    [SerializeField] private int objectCount = 6;       // must be even
-    public int targetSum = 20;
-    [SerializeField] private float unsolvableChance = 0.3f;
+    [SerializeField] private PuzzleStage[] stages;
+
+    public int CurrentTargetSum { get; private set; }
+    public int CurrentStage { get; private set; } = 0;
+    public bool IsFinalStage => CurrentStage >= LastStageIndex;
 
     [Header("Spawn Settings")]
     [SerializeField] private NetworkObject weightPrefabA; // for RoleA
@@ -26,6 +29,9 @@ public class PuzzleGenerator : NetworkBehaviour
     public bool IsSolvable { get; private set; }
 
     private bool spawned = false;
+    private readonly List<NetworkObject> spawnedWeights = new List<NetworkObject>();
+
+    private int LastStageIndex => stages.Length - 1;
 
     private void Awake()
     {
@@ -43,23 +49,48 @@ public class PuzzleGenerator : NetworkBehaviour
         //    GeneratePuzzle();
     }
 
+    // Resets progress back to the first stage. Call before starting a new game session.
+    public void ResetStages()
+    {
+        CurrentStage = 0;
+    }
+
+    // Advances to the next stage (if any remain) and generates its puzzle.
+    public void AdvanceStage()
+    {
+        if (!IsServer) return;
+        if (IsFinalStage) return;
+
+        CurrentStage++;
+        GeneratePuzzle();
+    }
+
     [ContextMenu("Generate Puzzle (Server Only)")]
     public void GeneratePuzzle()
     {
         if (!IsServer) return;
-        spawned = true;
+        if (stages == null || stages.Length == 0)
+        {
+            Debug.LogError("[PuzzleGenerator] No stages configured.");
+            return;
+        }
 
-        objectCount = Mathf.Max(2, objectCount % 2 == 0 ? objectCount : objectCount + 1);
-        targetSum = Mathf.Max(objectCount + 1, targetSum);
+        spawned = true;
+        DespawnCurrentWeights();
+
+        PuzzleStage stage = stages[Mathf.Clamp(CurrentStage, 0, stages.Length - 1)];
+
+        int objectCount = Mathf.Max(2, stage.objectCount % 2 == 0 ? stage.objectCount : stage.objectCount + 1);
+        CurrentTargetSum = Mathf.Max(objectCount + 1, stage.targetSum);
 
         int half = objectCount / 2;
-        List<int> left = GeneratePartition(targetSum, half);
-        List<int> right = GeneratePartition(targetSum, half);
+        List<int> left = GeneratePartition(CurrentTargetSum, half);
+        List<int> right = GeneratePartition(CurrentTargetSum, half);
 
         List<int> combined = new List<int>(left);
         combined.AddRange(right);
 
-        IsSolvable = UnityEngine.Random.value > unsolvableChance;
+        IsSolvable = UnityEngine.Random.value > stage.unsolvableChance;
         if (!IsSolvable)
             combined[0] += UnityEngine.Random.Range(1, 11);
 
@@ -70,6 +101,17 @@ public class PuzzleGenerator : NetworkBehaviour
         SpawnWeights(combined, half);
 
         scaleManager?.SetPuzzleData(TotalWeight, IsSolvable);
+    }
+
+    private void DespawnCurrentWeights()
+    {
+        foreach (NetworkObject obj in spawnedWeights)
+        {
+            if (obj == null) continue;
+            if (obj.IsSpawned) obj.Despawn();
+            else Destroy(obj.gameObject);
+        }
+        spawnedWeights.Clear();
     }
 
     private List<int> GeneratePartition(int sum, int count)
@@ -117,6 +159,7 @@ public class PuzzleGenerator : NetworkBehaviour
             NetworkObject obj = Instantiate(prefab, spawnPos, Quaternion.identity);
 
             obj.Spawn();
+            spawnedWeights.Add(obj);
 
             if (obj.TryGetComponent(out Draggable draggable))
             {
