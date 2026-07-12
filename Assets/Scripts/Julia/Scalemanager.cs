@@ -40,6 +40,9 @@ public class ScaleManager : NetworkBehaviour
     public float LiveScore => liveScore.Value;
     public float LiveBonusScore => liveBonusScore.Value;
 
+    // Sum of GetScore() from every stage completed so far this session, for the end screen's total.
+    private float cumulativeStageScore;
+
     private bool puzzleOver;
 
     private void Awake() => Instance = this;
@@ -72,7 +75,7 @@ public class ScaleManager : NetworkBehaviour
         if (PuzzleGenerator.Instance.hasPuzzle() && !TimerManager.Instance.IsSessionActive())
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, GetScore(), GetBonusScore());
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, cumulativeStageScore + GetScore(), GetBonusScore());
             return;
         }
 
@@ -90,11 +93,11 @@ public class ScaleManager : NetworkBehaviour
             if (PuzzleGenerator.Instance.IsFinalStage)
             {
                 puzzleOver = true;
-                float solvedScore = PuzzleGenerator.Instance.CurrentTargetSum * 2f * scoreMultiplier;
-                NotifyResultClientRpc(PuzzleResult.Solved, solvedScore, GetBonusScore());
+                NotifyResultClientRpc(PuzzleResult.Solved, cumulativeStageScore + GetScore(), GetBonusScore());
             }
             else
             {
+                cumulativeStageScore += GetScore();
                 ResetPans();
                 PuzzleGenerator.Instance.AdvanceStage();
                 NotifyStageCompleteClientRpc();
@@ -123,12 +126,12 @@ public class ScaleManager : NetworkBehaviour
         if (!isSolvable.Value && closeEnough)
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect, GetScore(), GetBonusScore());
+            NotifyResultClientRpc(PuzzleResult.UnsolvableCorrect, cumulativeStageScore + GetScore(), GetBonusScore());
         }
         else
         {
             puzzleOver = true;
-            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, GetScore(), GetBonusScore());
+            NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, cumulativeStageScore + GetScore(), GetBonusScore());
         }
     }
 
@@ -192,7 +195,7 @@ public class ScaleManager : NetworkBehaviour
     {
         if (puzzleOver) return;
         puzzleOver = true;
-        NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, GetScore(), GetBonusScore());
+        NotifyResultClientRpc(PuzzleResult.UnsolvableWrong, cumulativeStageScore + GetScore(), GetBonusScore());
     }
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
@@ -223,6 +226,7 @@ public class ScaleManager : NetworkBehaviour
     public void ServerStartSession()
     {
         if (!IsServer) return;
+        cumulativeStageScore = 0f;
         TimerManager.Instance?.StartSession();
         PuzzleGenerator generator = PuzzleGenerator.Instance;
         generator?.ResetStages();
