@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -14,6 +15,10 @@ public class PuzzleGenerator : NetworkBehaviour
     public int CurrentTargetSum { get; private set; }
     public int CurrentStage { get; private set; } = 0;
     public bool IsFinalStage => CurrentStage >= LastStageIndex;
+    public int TotalStages => stages.Length;
+
+    [Header("Stage Complete Popup")]
+    [SerializeField] private float stageCompletePopupDuration = 2f;
 
     [Header("Spawn Settings")]
     [SerializeField] private NetworkObject weightPrefabA; // for RoleA
@@ -23,6 +28,7 @@ public class PuzzleGenerator : NetworkBehaviour
 
     [Header("References")]
     [SerializeField] private ScaleManager scaleManager;
+    [SerializeField] private StageCompleteText stageCompleteText;
 
     // Tracked so ScaleManager can reference total
     public int TotalWeight { get; private set; }
@@ -53,6 +59,38 @@ public class PuzzleGenerator : NetworkBehaviour
     public void ResetStages()
     {
         CurrentStage = 0;
+    }
+
+    // Runs on every peer (called from ScaleManager's stage-complete Rpc) to display
+    // "Stage X/Total cleared!" briefly using each machine's own local text reference,
+    // then advances to the next stage once the popup disappears. AdvanceStage() is
+    // server-only internally, so the delayed advance only actually does anything on the server.
+    public void ShowStageCompletePopup(int completedStageNumber, int totalStages)
+    {
+        if (stageCompleteText != null)
+        {
+            stageCompleteText.SetText(completedStageNumber, totalStages);
+            stageCompleteText.Show();
+        }
+
+        StopAllCoroutines();
+        StartCoroutine(StageCompleteSequence());
+    }
+
+    private IEnumerator StageCompleteSequence()
+    {
+        yield return new WaitForSeconds(stageCompletePopupDuration);
+
+        if (stageCompleteText != null)
+            stageCompleteText.Hide();
+
+        // Reset pans here, right before the next puzzle spawns, rather than at the
+        // moment of solving - resetting immediately raced against in-flight
+        // OnTriggerEnter/Exit events from the just-completed puzzle on each machine's
+        // own local physics.
+        Debug.Log("-----------RESET PANS-----------");
+        scaleManager?.ResetPans();
+        AdvanceStage();
     }
 
     // Advances to the next stage (if any remain) and generates its puzzle.
