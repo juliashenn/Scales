@@ -97,10 +97,12 @@ public class ScaleManager : NetworkBehaviour
             }
             else
             {
+                int completedStageNumber = PuzzleGenerator.Instance.CurrentStage + 1;
+                int totalStages = PuzzleGenerator.Instance.TotalStages;
+
                 cumulativeStageScore += GetScore();
                 ResetPans();
-                PuzzleGenerator.Instance.AdvanceStage();
-                NotifyStageCompleteClientRpc();
+                NotifyStageCompleteClientRpc(completedStageNumber, totalStages);
             }
         }
     }
@@ -183,12 +185,13 @@ public class ScaleManager : NetworkBehaviour
     }
 
     [Rpc(SendTo.Everyone)]
-    private void NotifyStageCompleteClientRpc()
+    private void NotifyStageCompleteClientRpc(int completedStageNumber, int totalStages)
     {
         // Runs on the server and every client so each machine's local ScalePlatform
         // totals (which are only computed from local physics, not networked) get
         // zeroed out too, not just the server's.
         ResetPans();
+        PuzzleGenerator.Instance.ShowStageCompletePopup(completedStageNumber, totalStages);
         onStageCompleted?.Invoke();
     }
 
