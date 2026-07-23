@@ -100,14 +100,17 @@ public class ScaleManager : NetworkBehaviour
                 int completedStageNumber = PuzzleGenerator.Instance.CurrentStage + 1;
                 int totalStages = PuzzleGenerator.Instance.TotalStages;
 
+                // Pans no longer get zeroed immediately (see NotifyStageCompleteClientRpc),
+                // so without this guard leftPan/rightPan would keep matching the solved
+                // condition every frame during the popup delay and re-fire this Rpc in a loop.
+                puzzleOver = true;
                 cumulativeStageScore += GetScore();
-                ResetPans();
                 NotifyStageCompleteClientRpc(completedStageNumber, totalStages);
             }
         }
     }
 
-    private void ResetPans()
+    public void ResetPans()
     {
         leftPan.ResetWeight();
         rightPan.ResetWeight();
@@ -187,10 +190,10 @@ public class ScaleManager : NetworkBehaviour
     [Rpc(SendTo.Everyone)]
     private void NotifyStageCompleteClientRpc(int completedStageNumber, int totalStages)
     {
-        // Runs on the server and every client so each machine's local ScalePlatform
-        // totals (which are only computed from local physics, not networked) get
-        // zeroed out too, not just the server's.
-        ResetPans();
+        // Pan reset happens later, right before the next puzzle is generated (see
+        // PuzzleGenerator.StageCompleteSequence) - not here. Resetting immediately on
+        // solve raced against in-flight OnTriggerEnter/Exit events on each machine's
+        // local physics, sometimes re-adding a weight after the reset.
         PuzzleGenerator.Instance.ShowStageCompletePopup(completedStageNumber, totalStages);
         onStageCompleted?.Invoke();
     }

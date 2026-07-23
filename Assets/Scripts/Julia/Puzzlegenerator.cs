@@ -84,6 +84,12 @@ public class PuzzleGenerator : NetworkBehaviour
         if (stageCompleteText != null)
             stageCompleteText.Hide();
 
+        // Reset pans here, right before the next puzzle spawns, rather than at the
+        // moment of solving - resetting immediately raced against in-flight
+        // OnTriggerEnter/Exit events from the just-completed puzzle on each machine's
+        // own local physics.
+        Debug.Log("-----------RESET PANS-----------");
+        scaleManager?.ResetPans();
         AdvanceStage();
     }
 
