@@ -5,8 +5,13 @@ public class StageCompleteText : MonoBehaviour
 {
     [SerializeField] private TMP_Text stageText;
 
-    public void Show() => gameObject.SetActive(true);
-    public void Hide() => gameObject.SetActive(false);
+    public void Show() => stageText.gameObject.SetActive(true);
+    public void Hide() => stageText.gameObject.SetActive(false);
+
+    void Start()
+    {
+        Hide();
+    }
 
     public void SetText(int currentStage, int totalStages)
     {
