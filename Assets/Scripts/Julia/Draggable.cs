@@ -22,6 +22,13 @@ public class Draggable : NetworkBehaviour
     [SerializeField] private float dragThreshold = 0.001f;
     [SerializeField] private LayerMask draggableLayer;
 
+
+    [Header("Sound fx")]
+    public AudioClip pickupClip;
+    public AudioClip placeClip;
+    public AudioSource audioSource;
+    bool isBeingDragged;
+
     [Header("Shapes")]
     public NetworkVariable<WeightShape> shape = new NetworkVariable<WeightShape>(
     WeightShape.Square,
@@ -127,6 +134,7 @@ public class Draggable : NetworkBehaviour
 
         if (Mouse.current.leftButton.wasReleasedThisFrame)
         {
+            if (selected != null) audioSource.PlayOneShot(placeClip);
             selected = null;
             lastSentPosition = Vector3.zero;
         }
@@ -156,6 +164,7 @@ public class Draggable : NetworkBehaviour
         dragPlane = useXZPlane
             ? new Plane(Vector3.up, selected.transform.position)
             : new Plane(Vector3.forward, selected.transform.position);
+        audioSource.PlayOneShot(pickupClip);
 
         if (TryGetMouseWorld(out Vector3 worldPoint))
         {

@@ -13,32 +13,32 @@ public class DraggableAudio : MonoBehaviour
 
     void Awake() => audioSource = GetComponent<AudioSource>();
 
-    void Update()
-    {
-        var cam = Camera.main;
-        if (cam == null) return;
+    //void Update()
+    //{
+    //    var cam = Camera.main;
+    //    if (cam == null) return;
 
-        if (Mouse.current.leftButton.wasPressedThisFrame)
-        {
-            Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-            //Debug.Log("Click detected, raycasting...");
-            if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, draggableLayer))
-            {
-                //Debug.Log("Hit: " + hit.collider.gameObject.name);
-                var hitAudio = hit.collider.GetComponentInParent<DraggableAudio>();
-                if (hitAudio == this)
-                {
-                    //Debug.Log("Playing pickup sound, clip = " + pickupClip);
-                    isBeingDragged = true;
-                    audioSource.PlayOneShot(pickupClip);
-                }
-            }
-        }
+    //    if (Mouse.current.leftButton.wasPressedThisFrame)
+    //    {
+    //        Ray ray = cam.ScreenPointToRay(Mouse.current.position.ReadValue());
+    //        //Debug.Log("Click detected, raycasting...");
+    //        if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, draggableLayer))
+    //        {
+    //            //Debug.Log("Hit: " + hit.collider.gameObject.name);
+    //            var hitAudio = hit.collider.GetComponentInParent<DraggableAudio>();
+    //            if (hitAudio == this)
+    //            {
+    //                //Debug.Log("Playing pickup sound, clip = " + pickupClip);
+    //                isBeingDragged = true;
+    //                audioSource.PlayOneShot(pickupClip);
+    //            }
+    //        }
+    //    }
 
-        if (Mouse.current.leftButton.wasReleasedThisFrame && isBeingDragged)
-        {
-            isBeingDragged = false;
-            audioSource.PlayOneShot(placeClip);
-        }
-    }
+    //    if (Mouse.current.leftButton.wasReleasedThisFrame && isBeingDragged)
+    //    {
+    //        isBeingDragged = false;
+    //        audioSource.PlayOneShot(placeClip);
+    //    }
+    //}
 }

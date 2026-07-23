@@ -76,7 +76,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Unity.Netcode.Runtime::Unity.Netcode.NetworkObject
-  GlobalObjectIdHash: 713728352
+  GlobalObjectIdHash: 3923584679
   InScenePlacedSourceGlobalObjectIdHash: 0
   DeferredDespawnTick: 0
   Ownership: 1
@@ -113,6 +113,9 @@ MonoBehaviour:
   draggableLayer:
     serializedVersion: 2
     m_Bits: 128
+  pickupClip: {fileID: 8300000, guid: 49accbffb900f8a46a4da0a129166aa7, type: 3}
+  placeClip: {fileID: 8300000, guid: 3210a7a8359089141ac6f2053f3d7f03, type: 3}
+  audioSource: {fileID: 7579984623916676550}
   shape:
     UpdateTraits:
       MinSecondsBetweenUpdates: 0
@@ -183,7 +186,7 @@ AudioSource:
   m_audioClip: {fileID: 0}
   m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
-  m_Volume: 1
+  m_Volume: 0.5
   m_Pitch: 1
   Loop: 0
   Mute: 0

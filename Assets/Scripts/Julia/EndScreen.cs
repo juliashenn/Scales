@@ -44,10 +44,11 @@ public class EndScreen : MonoBehaviour
     public void Quit()
     {
         EndCanvas.SetActive(false);
-        PlayerRoleHolder.ResetRole();
-        NetworkManager.Singleton.Shutdown();
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().name
-        );
+        RelayManager.Instance?.ReturnToMainMenu();
+    }
+
+    public void Hide()
+    {
+        EndCanvas.SetActive(false);
     }
 }

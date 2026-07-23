@@ -8,6 +8,7 @@ public class RoleManager : NetworkBehaviour
 {
     public static RoleManager Instance;
     private Dictionary<ulong, PlayerRole> assignedRoles = new();
+    private List<ulong> pendingClients = new List<ulong>();
 
     void Awake() => Instance = this;
 
@@ -16,6 +17,11 @@ public class RoleManager : NetworkBehaviour
         if (!IsServer) return;
         NetworkManager.Singleton.OnClientConnectedCallback += AssignRole;
         NetworkManager.Singleton.OnClientDisconnectCallback += RemoveRole;
+
+        // Handle any clients that connected before we spawned
+        foreach (ulong clientId in pendingClients)
+            AssignRole(clientId);
+        pendingClients.Clear();
     }
     public PlayerRole GetRole(ulong clientId)
     {
@@ -24,6 +30,16 @@ public class RoleManager : NetworkBehaviour
 
     void AssignRole(ulong clientId)
     {
+
+        // If not spawned yet, queue for later
+        if (!IsSpawned)
+        {
+            pendingClients.Add(clientId);
+            return;
+        }
+
+        if (assignedRoles.ContainsKey(clientId)) return;
+
         PlayerRole role = assignedRoles.Count switch
         {
             0 => PlayerRole.RoleA,

@@ -116,6 +116,15 @@ public class ScaleManager : NetworkBehaviour
         rightPan.ResetWeight();
     }
 
+    // Clears session-only state that must not carry over after quit / rematch.
+    public void ResetSessionState()
+    {
+        puzzleOver = false;
+        cumulativeStageScore = 0f;
+        readyStates.Clear();
+        ResetPans();
+    }
+
     // Players call this to claim the puzzle is unsolvable
     [Rpc(SendTo.Server)]
     public void ClaimUnsolvableServerRpc()
@@ -236,10 +245,46 @@ public class ScaleManager : NetworkBehaviour
     public void ServerStartSession()
     {
         if (!IsServer) return;
-        cumulativeStageScore = 0f;
+        ResetSessionState();
         TimerManager.Instance?.StartSession();
         PuzzleGenerator generator = PuzzleGenerator.Instance;
         generator?.ResetStages();
         generator?.GeneratePuzzle();
+    }
+
+    [Rpc(SendTo.Server)]
+    public void PlayerLeftDuringGameServerRpc()
+    {
+        if (!puzzleOver)
+        {
+            puzzleOver = true;
+            TimerManager.Instance?.EndSession();
+
+            // Despawn all weights
+            foreach (var draggable in FindObjectsByType<Draggable>(FindObjectsSortMode.None))
+                draggable.GetComponent<NetworkObject>().Despawn(true);
+
+            // Reset pans
+            leftPan.totalWeight = 0;
+            rightPan.totalWeight = 0;
+            readyStates.Clear();
+
+            // Reset all player ready states
+            foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            {
+                var playerObj = client.PlayerObject;
+                if (playerObj != null && playerObj.TryGetComponent<Player>(out var player))
+                    player.IsReady.Value = false;
+            }
+
+            PlayerLeftClientRpc();
+        }
+    }
+
+    [Rpc(SendTo.Everyone)]
+    void PlayerLeftClientRpc()
+    {
+        Debug.Log("player left client rpc reseting");
+        RelayManager.Instance?.ReturnToMainMenu();
     }
 }

@@ -59,6 +59,7 @@ public class PuzzleGenerator : NetworkBehaviour
     public void ResetStages()
     {
         CurrentStage = 0;
+        spawned = false;
     }
 
     // Runs on every peer (called from ScaleManager's stage-complete Rpc) to display
@@ -115,6 +116,7 @@ public class PuzzleGenerator : NetworkBehaviour
 
         spawned = true;
         DespawnCurrentWeights();
+        scaleManager?.ResetPans();
 
         PuzzleStage stage = stages[Mathf.Clamp(CurrentStage, 0, stages.Length - 1)];
 

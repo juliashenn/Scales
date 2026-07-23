@@ -32,9 +32,6 @@ public class LobbyListUI : MonoBehaviour
         blackoutPanel.SetActive(true);
         lobbyUI.SetActive(true);
 
-        Debug.Log("lobbyUI activeSelf: " + lobbyUI.activeSelf);
-        Debug.Log("lobbyUI activeInHierarchy: " + lobbyUI.activeInHierarchy);
-        Debug.Log("blackoutPanel activeInHierarchy: " + blackoutPanel.activeInHierarchy);
         RefreshList();
     }
 
@@ -92,25 +89,6 @@ public class LobbyListUI : MonoBehaviour
 
     void LeaveLobby()
     {
-        if (NetworkManager.Singleton.IsHost)
-        {
-            // Host leaving kicks everyone since the relay dies with it
-            // Warn them first via a confirm dialog if you want, or just shut down
-            NetworkManager.Singleton.Shutdown();
-        }
-        else
-        {
-            NetworkManager.Singleton.Shutdown();
-        }
-
-        // Reset local state
-        PlayerRoleHolder.ResetRole();
-        localReady = false;
-        readyButtontext.text = readyButtonTexts[0];
-        readyButtonImg.color = green;
-
-        // Show the host/join screen again
-        // You'll need a reference to HostJoinCanvas here, or call back into RelayManager
-        RelayManager.Instance?.ShowHostJoinScreen();
+        RelayManager.Instance?.ReturnToMainMenu();
     }
 }

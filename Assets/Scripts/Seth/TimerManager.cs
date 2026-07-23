@@ -67,6 +67,7 @@ public class TimerManager : NetworkBehaviour
     {
         if (!IsServer) return;
         sessionActive.Value = true;
+        HUDVisibility.Instance?.SetVisible(true);
         roleTimer = 0f;
         puzzleTimer.Value = 0f;
 
@@ -78,6 +79,7 @@ public class TimerManager : NetworkBehaviour
     {
         if (!IsServer) return;
         sessionActive.Value = false;
+        HUDVisibility.Instance?.SetVisible(false);
         onTimeExpired?.Invoke();
         Debug.Log("[TimerManager] Puzzle time expired - Game Over");
 
@@ -87,6 +89,7 @@ public class TimerManager : NetworkBehaviour
 
     public void EndSession()
     {
+        HUDVisibility.Instance?.SetVisible(false);
         if (!IsServer) return;
         sessionActive.Value = false;
     }
