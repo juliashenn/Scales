@@ -36,13 +36,13 @@ public class TimerManager : NetworkBehaviour
         if (!IsServer || !sessionActive.Value) return;
 
         // Role switching
-        roleTimer += Time.deltaTime;
-        if (roleTimer >= roleSwitchInterval)
-        {
-            roleTimer = 0f;
-            RoleManager.Instance?.CycleRoles();   // Extended function in RoleManager
-            onRolesSwapped?.Invoke();
-        }
+        //roleTimer += Time.deltaTime;
+        //if (roleTimer >= roleSwitchInterval)
+        //{
+        //    roleTimer = 0f;
+        //    RoleManager.Instance?.CycleRoles();   // Extended function in RoleManager
+        //    onRolesSwapped?.Invoke();
+        //}
 
         // Puzzle timer
         puzzleTimer.Value += Time.deltaTime;

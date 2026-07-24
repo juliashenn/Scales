@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -106,8 +107,15 @@ public class ScaleManager : NetworkBehaviour
                 puzzleOver = true;
                 cumulativeStageScore += GetScore();
                 NotifyStageCompleteClientRpc(completedStageNumber, totalStages);
+                StartCoroutine(WaitOne());
+                RoleManager.Instance?.CycleRoles();
             }
         }
+    }
+
+    private IEnumerator WaitOne()
+    {
+        yield return new WaitForSeconds(1.0f);
     }
 
     public void ResetPans()

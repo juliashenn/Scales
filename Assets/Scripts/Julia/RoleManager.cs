@@ -22,7 +22,9 @@ public class RoleManager : NetworkBehaviour
         foreach (ulong clientId in pendingClients)
             AssignRole(clientId);
         pendingClients.Clear();
+
     }
+
     public PlayerRole GetRole(ulong clientId)
     {
         return assignedRoles.TryGetValue(clientId, out var role) ? role : PlayerRole.None;
@@ -67,18 +69,16 @@ public class RoleManager : NetworkBehaviour
     public void CycleRoles()
     {
         if (assignedRoles.Count < 3) return;
-
         var clientIds = assignedRoles.Keys.ToList();
         var currentRoles = clientIds.ToDictionary(id => id, id => assignedRoles[id]);
-
         for (int i = 0; i < clientIds.Count; i++)
         {
             ulong clientId = clientIds[i];
             PlayerRole newRole = currentRoles[clientIds[(i + 1) % clientIds.Count]];
-
             assignedRoles[clientId] = newRole;
             SetRoleClientRpc((int)newRole, RpcTarget.Single(clientId, RpcTargetUse.Temp));
         }
+
     }
 }
 

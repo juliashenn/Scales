@@ -23,7 +23,11 @@ public class LobbyListUI : MonoBehaviour
     private List<string> readyButtonTexts = new List<string> {"I'm Ready!", "Cancel Ready"};
     private bool localReady = false;
 
-    void Awake() => Instance = this;
+    void Awake()
+    {
+        Instance = this;
+
+    }
 
     public void ShowLobby()
     {
@@ -45,7 +49,6 @@ public class LobbyListUI : MonoBehaviour
     {
         readyButton.onClick.AddListener(ToggleReady);
         leaveButton.onClick.AddListener(LeaveLobby);
-
     }
 
     void ToggleReady()

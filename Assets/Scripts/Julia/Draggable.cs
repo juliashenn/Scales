@@ -1,65 +1,70 @@
-using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.VectorGraphics;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 public enum WeightShape
 {
     Square, Circle, Triangle, Star, Heart, Pentagon
-};
+}
 
 public class Draggable : NetworkBehaviour
 {
     public NetworkVariable<float> weight = new NetworkVariable<float>(
-    0f,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
+        0f,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
     );
+
+    public NetworkVariable<WeightShape> shape = new NetworkVariable<WeightShape>(
+        WeightShape.Square,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+
     [SerializeField] private bool useXZPlane = true;
-    [SerializeField] private PlayerRole requiredRole;
+    [SerializeField] public PlayerRole requiredRole;
     [SerializeField] private float dragThreshold = 0.001f;
     [SerializeField] private LayerMask draggableLayer;
 
-
-    [Header("Sound fx")]
+    [Header("Sound FX")]
     public AudioClip pickupClip;
     public AudioClip placeClip;
     public AudioSource audioSource;
-    bool isBeingDragged;
 
     [Header("Shapes")]
-    public NetworkVariable<WeightShape> shape = new NetworkVariable<WeightShape>(
-    WeightShape.Square,
-    NetworkVariableReadPermission.Everyone,
-    NetworkVariableWritePermission.Server
-    );
     [SerializeField] private GameObject square;
     [SerializeField] private GameObject circle;
     [SerializeField] private GameObject triangle;
     [SerializeField] private GameObject star;
     [SerializeField] private GameObject heart;
     [SerializeField] private GameObject pentagon;
-    private Dictionary<WeightShape, GameObject> shapePrefabs;
 
+    private Dictionary<WeightShape, GameObject> shapePrefabs;
     private NetworkObject selected;
     private Vector3 offset;
     private Plane dragPlane;
     private Vector3 lastSentPosition;
 
-    private Camera Cam => Camera.main; // always fetches the current active main camera
+    private Camera Cam
+    {
+        get
+        {
+            var c = Camera.main;
+            return c != null && c.gameObject.activeInHierarchy ? c : null;
+        }
+    }
 
     private void Awake()
     {
         shapePrefabs = new Dictionary<WeightShape, GameObject>
         {
-            {WeightShape.Square, square },
-            {WeightShape.Circle, circle },
-            {WeightShape.Triangle, triangle },
-            {WeightShape.Star, star },
-            {WeightShape.Heart, heart },
-            {WeightShape.Pentagon, pentagon }
+            { WeightShape.Square,   square   },
+            { WeightShape.Circle,   circle   },
+            { WeightShape.Triangle, triangle },
+            { WeightShape.Star,     star     },
+            { WeightShape.Heart,    heart    },
+            { WeightShape.Pentagon, pentagon }
         };
 
         foreach (var kvp in shapePrefabs)
@@ -68,13 +73,13 @@ public class Draggable : NetworkBehaviour
 
     public override void OnNetworkSpawn()
     {
-        // Subscribe to changes — fires on every client whenever the server updates the value
         weight.OnValueChanged += (oldVal, newVal) => ApplyScale(newVal);
         shape.OnValueChanged += (oldVal, newVal) => ApplyShape(newVal);
 
-        // Apply current values immediately in case they were already set before this client spawned
         ApplyScale(weight.Value);
         ApplyShape(shape.Value);
+
+        if (audioSource != null) audioSource.volume = 0.1f;
     }
 
     public void ServerSetup(float newWeight, WeightShape newShape)
@@ -95,26 +100,11 @@ public class Draggable : NetworkBehaviour
         foreach (var kvp in shapePrefabs)
             kvp.Value.SetActive(kvp.Key == newShape);
     }
-    public void SetShape(WeightShape newShape)
-    {
-        if (!shapePrefabs.ContainsKey(newShape))
-        {
-            Debug.LogError($"Missing prefab for {newShape}");
-            return;
-        }
-
-        if (shapePrefabs.ContainsKey(shape.Value))
-            shapePrefabs[shape.Value].SetActive(false);
-
-        shapePrefabs[newShape].SetActive(true);
-
-        shape.Value = newShape;
-    }
 
     void Update()
     {
         if (!IsClient) return;
-        if (Cam == null) return; // safety check in case camera isn't ready yet
+        if (Cam == null) return;
 
         if (Mouse.current.leftButton.wasPressedThisFrame)
             TryPick();
@@ -126,6 +116,8 @@ public class Draggable : NetworkBehaviour
                 Vector3 targetPos = worldPoint + offset;
                 if (Vector3.Distance(targetPos, lastSentPosition) > dragThreshold)
                 {
+                    // Predict locally immediately — don't wait for server round trip
+                    selected.transform.position = targetPos;
                     DragServerRpc(new NetworkObjectReference(selected), targetPos);
                     lastSentPosition = targetPos;
                 }
@@ -134,7 +126,8 @@ public class Draggable : NetworkBehaviour
 
         if (Mouse.current.leftButton.wasReleasedThisFrame)
         {
-            if (selected != null) audioSource.PlayOneShot(placeClip);
+            if (selected != null)
+                audioSource?.PlayOneShot(placeClip);
             selected = null;
             lastSentPosition = Vector3.zero;
         }
@@ -143,7 +136,6 @@ public class Draggable : NetworkBehaviour
     void TryPick()
     {
         Ray ray = Cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-
         if (!Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, draggableLayer)) return;
 
         var netObj = hit.collider.GetComponentInParent<NetworkObject>();
@@ -151,8 +143,6 @@ public class Draggable : NetworkBehaviour
 
         var draggable = netObj.GetComponent<Draggable>();
         if (draggable == null) return;
-
-        Debug.Log("picking...");
 
         if (draggable.requiredRole != PlayerRoleHolder.LocalRole)
         {
@@ -164,7 +154,8 @@ public class Draggable : NetworkBehaviour
         dragPlane = useXZPlane
             ? new Plane(Vector3.up, selected.transform.position)
             : new Plane(Vector3.forward, selected.transform.position);
-        audioSource.PlayOneShot(pickupClip);
+
+        audioSource?.PlayOneShot(pickupClip);
 
         if (TryGetMouseWorld(out Vector3 worldPoint))
         {
@@ -176,13 +167,11 @@ public class Draggable : NetworkBehaviour
     bool TryGetMouseWorld(out Vector3 worldPoint)
     {
         Ray ray = Cam.ScreenPointToRay(Mouse.current.position.ReadValue());
-
         if (dragPlane.Raycast(ray, out float distance))
         {
             worldPoint = ray.GetPoint(distance);
             return true;
         }
-
         worldPoint = Vector3.zero;
         return false;
     }

@@ -18,7 +18,7 @@ public class RelayManager : MonoBehaviour
     [SerializeField] Button joinButton;
     [SerializeField] TMP_InputField joinInput;
     [SerializeField] GameObject LobbyCanvas;
-    [SerializeField] TextMeshProUGUI codeText;
+    [SerializeField] TMP_InputField codeText;
     [SerializeField] GameObject HostJoinCanvas;
 
     private bool pendingReturnToMenu;
@@ -38,7 +38,6 @@ public class RelayManager : MonoBehaviour
         joinButton.onClick.AddListener(() => JoinRelay(joinInput.text));
         joinInput.onSubmit.AddListener((code) => JoinRelay(code));
     }
-
     async void CreateRelay()
     {
         if (connectingRelay) return;
@@ -50,11 +49,11 @@ public class RelayManager : MonoBehaviour
         {
             await EnsureNetworkShutdownAsync();
 
-            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(3);
+            Allocation allocation = await RelayService.Instance.CreateAllocationAsync(2);
             string joinCode = await RelayService.Instance.GetJoinCodeAsync(allocation.AllocationId);
-            codeText.text = "Lobby Code: " + joinCode;
+            codeText.text = joinCode;
 
-            var relayServerData = AllocationUtils.ToRelayServerData(allocation, "dtls");
+            var relayServerData = AllocationUtils.ToRelayServerData(allocation, "wss");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
             RegisterLobbyCallbacks();
 
@@ -91,9 +90,9 @@ public class RelayManager : MonoBehaviour
             await EnsureNetworkShutdownAsync();
 
             var joinAllocation = await RelayService.Instance.JoinAllocationAsync(joinCode);
-            codeText.text = "Lobby Code: " + joinCode;
+            codeText.text = joinCode;
 
-            var relayServerData = AllocationUtils.ToRelayServerData(joinAllocation, "dtls");
+            var relayServerData = AllocationUtils.ToRelayServerData(joinAllocation, "wss");
             NetworkManager.Singleton.GetComponent<UnityTransport>().SetRelayServerData(relayServerData);
             RegisterLobbyCallbacks();
 
