@@ -26,6 +26,8 @@ public class Draggable : NetworkBehaviour
     [SerializeField] public PlayerRole requiredRole;
     [SerializeField] private float dragThreshold = 0.001f;
     [SerializeField] private LayerMask draggableLayer;
+    private float lastRpcTime;
+    [SerializeField] private float rpcSendRate = 0.05f;
 
     [Header("Sound FX")]
     public AudioClip pickupClip;
@@ -114,12 +116,15 @@ public class Draggable : NetworkBehaviour
             if (TryGetMouseWorld(out Vector3 worldPoint))
             {
                 Vector3 targetPos = worldPoint + offset;
-                if (Vector3.Distance(targetPos, lastSentPosition) > dragThreshold)
+                selected.transform.position = targetPos; // always predict locally
+
+                // Only send RPC at fixed rate, not every frame
+                if (Time.time - lastRpcTime >= rpcSendRate &&
+                    Vector3.Distance(targetPos, lastSentPosition) > dragThreshold)
                 {
-                    // Predict locally immediately — don't wait for server round trip
-                    selected.transform.position = targetPos;
                     DragServerRpc(new NetworkObjectReference(selected), targetPos);
                     lastSentPosition = targetPos;
+                    lastRpcTime = Time.time;
                 }
             }
         }
@@ -151,6 +156,7 @@ public class Draggable : NetworkBehaviour
         }
 
         selected = netObj;
+        lastRpcTime = 0f; // reset so first drag sends immediately
         dragPlane = useXZPlane
             ? new Plane(Vector3.up, selected.transform.position)
             : new Plane(Vector3.forward, selected.transform.position);
