@@ -53,18 +53,22 @@ public class LobbyListUI : MonoBehaviour
 
     void ToggleReady()
     {
+        if (ScaleManager.Instance == null || !ScaleManager.Instance.IsSpawned)
+        {
+            Debug.Log("Not ready to send ready check yet");
+            return;
+        }
+
         localReady = !localReady;
         readyButtontext.text = localReady ? readyButtonTexts[1] : readyButtonTexts[0];
         readyButtonImg.color = localReady ? red : green;
 
-        // Set on our own Player NetworkObject
         var localPlayer = NetworkManager.Singleton.LocalClient?.PlayerObject;
         if (localPlayer != null && localPlayer.TryGetComponent<Player>(out var player))
             player.IsReady.Value = localReady;
 
         ulong localId = NetworkManager.Singleton.LocalClientId;
-        if (ScaleManager.Instance != null && ScaleManager.Instance.IsSpawned)
-            ScaleManager.Instance.ReadyCheckServerRpc(localId, localReady);
+        ScaleManager.Instance.ReadyCheckServerRpc(localId, localReady);
     }
 
     public void HideBlackout()
@@ -93,5 +97,16 @@ public class LobbyListUI : MonoBehaviour
     void LeaveLobby()
     {
         RelayManager.Instance?.ReturnToMainMenu();
+    }
+    void Update()
+    {
+        if (readyButton != null)
+            readyButton.interactable = ScaleManager.Instance != null && ScaleManager.Instance.IsSpawned;
+    }
+
+    public void ShowConnecting()
+    {
+        if (listText != null)
+            listText.text = "Connecting...";
     }
 }

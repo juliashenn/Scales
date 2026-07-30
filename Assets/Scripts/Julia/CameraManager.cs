@@ -13,12 +13,21 @@ public class CameraManager : MonoBehaviour
 
     void Start()
     {
+        Cursor.lockState = CursorLockMode.Confined;
         PlayerRoleHolder.OnRoleAssigned += HandleRole;
 
         // Apply immediately if role is already set (e.g. stale static value)
         // Only do this if it's a real role, not None
         if (PlayerRoleHolder.LocalRole != PlayerRole.None)
             HandleRole(PlayerRoleHolder.LocalRole);
+    }
+
+    void Update()
+    {
+        if (Cursor.lockState != CursorLockMode.Confined)
+        {
+            Cursor.lockState = CursorLockMode.Confined;
+        }
     }
 
     void OnDestroy()

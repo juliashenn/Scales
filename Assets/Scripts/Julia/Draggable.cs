@@ -136,6 +136,40 @@ public class Draggable : NetworkBehaviour
             selected = null;
             lastSentPosition = Vector3.zero;
         }
+
+        if (selected != null)
+        {
+            Vector3 screenPos = Cam.WorldToScreenPoint(selected.transform.position);
+            float margin = 20f; // pixels from edge
+
+            bool outOfBounds =
+                screenPos.x < margin || screenPos.x > Screen.width - margin ||
+                screenPos.y < margin || screenPos.y > Screen.height - margin ||
+                screenPos.z < 0; // behind camera
+
+            if (outOfBounds)
+            {
+                // Clamp screen position back inside
+                screenPos.x = Mathf.Clamp(screenPos.x, margin, Screen.width - margin);
+                screenPos.y = Mathf.Clamp(screenPos.y, margin, Screen.height - margin);
+                screenPos.z = Mathf.Max(screenPos.z, 1f); // ensure in front of camera
+
+                // Convert back to world position on the drag plane
+                Ray ray = Cam.ScreenPointToRay(screenPos);
+                if (dragPlane.Raycast(ray, out float distance))
+                {
+                    Vector3 clampedWorld = ray.GetPoint(distance);
+                    selected.transform.position = clampedWorld;
+                    DragServerRpc(new NetworkObjectReference(selected), clampedWorld);
+                    lastSentPosition = clampedWorld;
+                    lastRpcTime = Time.time;
+
+                    // Recalculate offset so object doesn't snap when cursor returns
+                    //if (TryGetMouseWorld(out Vector3 mouseWorld))
+                    //    offset = clampedWorld - mouseWorld;
+                }
+            }
+        }
     }
 
     void TryPick()

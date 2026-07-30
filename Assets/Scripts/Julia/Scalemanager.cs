@@ -46,7 +46,10 @@ public class ScaleManager : NetworkBehaviour
 
     private bool puzzleOver;
 
-    private void Awake() => Instance = this;
+    private void Awake()
+    {
+        Instance = this;
+    }
 
     // Called by PuzzleGenerator after generating
     public void SetPuzzleData(int total, bool solvable)
@@ -231,8 +234,17 @@ public class ScaleManager : NetworkBehaviour
     [Rpc(SendTo.Server)]
     public void ReadyCheckServerRpc(ulong clientId, bool isReady)
     {
-        // Track ready states server-side instead of reading NetworkVariable
         readyStates[clientId] = isReady;
+
+        var connectedIds = new HashSet<ulong>();
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+            connectedIds.Add(client.ClientId);
+
+        var staleKeys = new List<ulong>();
+        foreach (var key in readyStates.Keys)
+            if (!connectedIds.Contains(key)) staleKeys.Add(key);
+        foreach (var key in staleKeys)
+            readyStates.Remove(key);
 
         int readyCount = 0;
         foreach (var kvp in readyStates)

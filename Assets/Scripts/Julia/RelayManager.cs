@@ -23,6 +23,9 @@ public class RelayManager : MonoBehaviour
 
     private bool pendingReturnToMenu;
     private bool connectingRelay;
+    private float connectionTimeout = 5f;
+    private float connectionTimer = 0f;
+    private bool waitingForConnection = false;
 
     private void Awake() => Instance = this;
 
@@ -103,8 +106,13 @@ public class RelayManager : MonoBehaviour
                 return;
             }
 
+            // Start timeout check in case host is gone
+            waitingForConnection = true;
+            connectionTimer = connectionTimeout;
+
             ShowLobbyScreen();
             LobbyListUI.Instance?.ShowLobby();
+            LobbyListUI.Instance?.ShowConnecting();
         }
         catch (System.Exception ex)
         {
@@ -117,6 +125,25 @@ public class RelayManager : MonoBehaviour
         }
     }
 
+    void Update()
+    {
+        if (!waitingForConnection) return;
+
+        // Stop waiting once fully connected
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsConnectedClient)
+        {
+            waitingForConnection = false;
+            return;
+        }
+
+        connectionTimer -= Time.deltaTime;
+        if (connectionTimer <= 0f)
+        {
+            waitingForConnection = false;
+            Debug.LogWarning("[RelayManager] Connection timed out, returning to menu.");
+            ReturnToMainMenu();
+        }
+    }
     void RegisterLobbyCallbacks()
     {
         NetworkManager.Singleton.OnClientConnectedCallback -= OnClientChanged;

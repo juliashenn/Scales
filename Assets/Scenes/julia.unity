@@ -6417,20 +6417,21 @@ MonoBehaviour:
       MinSecondsBetweenUpdates: 0
       MaxSecondsBetweenUpdates: 0
     m_InternalValue: 0
+  shape:
+    UpdateTraits:
+      MinSecondsBetweenUpdates: 0
+      MaxSecondsBetweenUpdates: 0
+    m_InternalValue: 0
   useXZPlane: 1
   requiredRole: 0
   dragThreshold: 0.001
   draggableLayer:
     serializedVersion: 2
     m_Bits: 0
+  rpcSendRate: 0.05
   pickupClip: {fileID: 0}
   placeClip: {fileID: 0}
   audioSource: {fileID: 0}
-  shape:
-    UpdateTraits:
-      MinSecondsBetweenUpdates: 0
-      MaxSecondsBetweenUpdates: 0
-    m_InternalValue: 0
   square: {fileID: 0}
   circle: {fileID: 0}
   triangle: {fileID: 0}
